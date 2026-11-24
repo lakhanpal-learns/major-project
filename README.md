@@ -27,7 +27,7 @@ PostgreSQL production persistence, Kafka event streaming, PySpark processing, XG
 ```bash
 cd backend
 python -m venv .venv
-# Windows: .venv\\Scripts\\activate
+# Windows: .venv\Scripts\activate
 # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload

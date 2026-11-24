@@ -1,18 +1,25 @@
 # Banking Fraud & AML Intelligence Platform
 
-An academic decision-support prototype for transaction fraud risk detection and anti-money-laundering (AML) network analysis. The system uses public and/or synthetic data; it is not connected to real banking infrastructure and does not make legal determinations.
+Decision-support software for transaction monitoring, fraud-risk triage, AML pattern detection and investigation case management.
 
-## Architecture (target)
-- **Web:** Next.js + TypeScript
-- **API:** FastAPI + Pydantic
-- **Storage:** PostgreSQL
-- **Data engineering:** Python / PySpark; Kafka for simulated streaming
-- **Fraud model:** XGBoost
-- **AML graph:** GraphSAGE experimentation with PyTorch Geometric
-- **Analytics:** Power BI (historical reporting)
+## Current implementation
 
-## Repository status
-The first milestone establishes the API and web application skeleton. Advanced integrations (PostgreSQL persistence, Spark, Kafka, XGBoost, GraphSAGE and Power BI) are planned and must not be treated as implemented until their modules and tests are added.
+- FastAPI backend and Next.js investigator interface.
+- SQLite persistence for local development.
+- Automatic local dataset initialization when the API starts; the interface does not require a manual seed action.
+- Transaction search and detail inspection.
+- Explainable rule-based transaction risk checks and account-funnel pattern checks.
+- Alert review and case lifecycle management.
+
+## Data-source boundary
+
+The local environment currently initializes generated transaction records so the complete workflow can be exercised without bank credentials. These records are not live banking data. No bank, payment network, or external transaction provider is connected. To process real activity, configure an authorized provider or licensed dataset and implement its adapter; never submit confidential banking data without authorization.
+
+Risk scores are indicators for human review, not proof of fraud or money laundering.
+
+## Planned integrations (not yet implemented)
+
+PostgreSQL production persistence, Kafka event streaming, PySpark processing, XGBoost model inference/training, GraphSAGE graph learning, and Power BI reporting. These must not be represented as active integrations until implemented and tested.
 
 ## Run locally
 
@@ -20,7 +27,7 @@ The first milestone establishes the API and web application skeleton. Advanced i
 ```bash
 cd backend
 python -m venv .venv
-# Windows: .venv\Scripts\activate
+# Windows: .venv\\Scripts\\activate
 # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
@@ -36,13 +43,7 @@ npm run dev
 Web app: http://localhost:3000
 
 ## Project structure
-```
-backend/    FastAPI service
-frontend/   Next.js investigator application
-docs/       Architecture and implementation notes
-```
 
-## Safety and scope
-- Use synthetic or appropriately licensed public datasets only.
-- Scores are indicators for human review, not proof of fraud or money laundering.
-- No real payment authorization, transaction blocking, or confidential customer data.
+- `backend/`: FastAPI service, SQLite persistence and risk engine
+- `frontend/`: Next.js investigator application
+- `docs/`: architecture and implementation notes

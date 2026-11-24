@@ -26,6 +26,27 @@ def test_system_status_is_explicit_about_models():
     assert integrations["graphsage"] == "not_implemented"
 
 
+def test_transaction_search_filters_and_detail():
+    client.post("/api/v1/demo/seed")
+    filtered = client.get("/api/v1/transactions", params={
+        "q": "TAML001", "channel": "IMPS", "min_amount": 40000, "max_amount": 50000
+    })
+    assert filtered.status_code == 200
+    rows = filtered.json()
+    assert len(rows) == 1
+    assert rows[0]["id"] == "TAML001"
+    assert rows[0]["from_customer_name"] == "Kabir Singh"
+
+    detail = client.get("/api/v1/transactions/TAML001")
+    assert detail.status_code == 200
+    assert detail.json()["to_account"] == "A004"
+
+    invalid_range = client.get("/api/v1/transactions", params={
+        "min_amount": 50000, "max_amount": 10000
+    })
+    assert invalid_range.status_code == 422
+
+
 def test_demo_seed_and_investigation_workflow():
     seeded = client.post("/api/v1/demo/seed")
     assert seeded.status_code == 200

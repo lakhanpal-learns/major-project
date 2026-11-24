@@ -25,6 +25,7 @@ def system_status():
         "stage": "functional_mvp",
         "integrations": {
             "api": "implemented", "database": "sqlite_local",
+            "transaction_investigation": "implemented",
             "streaming": "simulated_by_seeded_batch",
             "fraud_detection": "explainable_heuristics",
             "aml_detection": "account_funnel_heuristic",

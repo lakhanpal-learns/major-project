@@ -157,7 +157,7 @@ def dashboard():
             "transactions": count("transactions"), "alerts": count("alerts"),
             "open_alerts": db.execute("SELECT COUNT(*) FROM alerts WHERE status='open'").fetchone()[0],
             "cases": count("cases"), "alerts_by_level": alerts,
-            "disclaimer": "Synthetic demo data; risk signals require human investigation."
+            "disclaimer": "Local generated transaction source; risk indicators require human investigation."
         }
 
 

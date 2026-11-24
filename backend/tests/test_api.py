@@ -65,3 +65,13 @@ def test_demo_seed_and_investigation_workflow():
     })
     assert updated.status_code == 200
     assert updated.json()["status"] == "investigating"
+
+
+def test_application_startup_initializes_local_environment():
+    dashboard = client.get("/api/v1/dashboard")
+    assert dashboard.status_code == 200
+    data = dashboard.json()
+    assert data["customers"] > 0
+    assert data["accounts"] > 0
+    assert data["transactions"] > 0
+    assert "local generated transaction source" in data["disclaimer"].lower()

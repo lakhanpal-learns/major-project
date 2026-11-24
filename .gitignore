@@ -1,0 +1,16 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+
+# Local data and secrets
+.env
+.env.*.local
+*.db
+*.sqlite
+*.sqlite3

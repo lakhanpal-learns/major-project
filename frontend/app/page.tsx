@@ -13,11 +13,22 @@ type Alert = {
   risk_score: number; risk_level: string; reasons: string; status: string;
 };
 type Case = { id: string; title: string; priority: string; status: string; analyst_note: string };
+type Transaction = {
+  id: string; from_account: string; to_account: string; amount: number;
+  currency: string; channel: string; device_id: string; location: string;
+  occurred_at: string; from_customer_name?: string; to_customer_name?: string;
+};
 
 export default function Home() {
   const [data, setData] = useState<Dashboard | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [cases, setCases] = useState<Case[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [query, setQuery] = useState("");
+  const [channel, setChannel] = useState("");
+  const [minAmount, setMinAmount] = useState("");
+  const [maxAmount, setMaxAmount] = useState("");
+  const [selected, setSelected] = useState<Transaction | null>(null);
   const [message, setMessage] = useState("Connect to the API, then generate demo data.");
   const [busy, setBusy] = useState(false);
 
@@ -34,6 +45,31 @@ export default function Home() {
     }
   }
 
+  async function loadTransactions() {
+    const params = new URLSearchParams();
+    if (query.trim()) params.set("q", query.trim());
+    if (channel) params.set("channel", channel);
+    if (minAmount) params.set("min_amount", minAmount);
+    if (maxAmount) params.set("max_amount", maxAmount);
+    try {
+      const response = await fetch(API + "/transactions?" + params.toString());
+      if (!response.ok) throw new Error("Transaction search failed");
+      setTransactions(await response.json());
+    } catch {
+      setTransactions([]);
+    }
+  }
+
+  async function inspectTransaction(id: string) {
+    try {
+      const response = await fetch(API + "/transactions/" + encodeURIComponent(id));
+      if (!response.ok) throw new Error("Could not load transaction details");
+      setSelected(await response.json());
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Detail request failed");
+    }
+  }
+
   async function action(path: string, method = "POST", body?: unknown) {
     setBusy(true);
     try {
@@ -45,12 +81,14 @@ export default function Home() {
       if (!response.ok) throw new Error(result.detail || "Request failed");
       setMessage("Action completed successfully");
       await load();
+      await loadTransactions();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Action failed");
     } finally { setBusy(false); }
   }
 
   useEffect(() => { void load(); }, []);
+  useEffect(() => { void loadTransactions(); }, [query, channel, minAmount, maxAmount]);
 
   return (
     <main className="shell">
@@ -72,7 +110,7 @@ export default function Home() {
 
       <section className="section-head">
         <div><p className="eyebrow">LIVE SYSTEM METRICS</p><h2>Platform overview</h2></div>
-        <span className="counter">AUTO-REFRESH ON ACTION</span>
+        <span className="counter">REFRESHED AFTER ACTIONS</span>
       </section>
       <section className="metrics">
         {[
@@ -83,6 +121,42 @@ export default function Home() {
           <span>{label}</span><strong>{value ?? "—"}</strong>
         </article>)}
       </section>
+
+      <section className="section-head">
+        <div><p className="eyebrow">TRANSACTION INTELLIGENCE</p><h2>Transaction investigation</h2></div>
+        <span className="counter">{transactions.length} MATCHING RECORDS</span>
+      </section>
+      <section className="transaction-tools">
+        <input aria-label="Search transactions" placeholder="Search ID, account, device or location" value={query} onChange={e => setQuery(e.target.value)} />
+        <select aria-label="Payment channel" value={channel} onChange={e => setChannel(e.target.value)}>
+          <option value="">All channels</option><option value="UPI">UPI</option><option value="NEFT">NEFT</option><option value="IMPS">IMPS</option>
+        </select>
+        <input aria-label="Minimum amount" type="number" min="0" placeholder="Min amount (INR)" value={minAmount} onChange={e => setMinAmount(e.target.value)} />
+        <input aria-label="Maximum amount" type="number" min="0" placeholder="Max amount (INR)" value={maxAmount} onChange={e => setMaxAmount(e.target.value)} />
+        <button className="small secondary" onClick={() => { setQuery(""); setChannel(""); setMinAmount(""); setMaxAmount(""); }}>Clear filters</button>
+      </section>
+      <div className="table-wrap">
+        <table><thead><tr><th>TRANSACTION</th><th>FROM</th><th>TO</th><th>AMOUNT</th><th>CHANNEL</th><th>LOCATION</th><th>DEVICE</th><th>DETAIL</th></tr></thead>
+          <tbody>{transactions.map(tx => <tr key={tx.id}>
+            <td>{tx.id}</td><td>{tx.from_account}</td><td>{tx.to_account}</td>
+            <td>{tx.currency} {tx.amount.toLocaleString("en-IN")}</td><td>{tx.channel}</td>
+            <td>{tx.location}</td><td>{tx.device_id}</td>
+            <td><button className="small secondary" onClick={() => inspectTransaction(tx.id)}>Inspect</button></td>
+          </tr>)}</tbody>
+        </table>
+        {transactions.length === 0 && <p className="empty">No matching transactions. Generate demo data or change the filters.</p>}
+      </div>
+      {selected && <section className="detail-panel">
+        <div className="detail-heading"><div><p className="eyebrow">TRANSACTION RECORD</p><h3>{selected.id}</h3></div><button className="small secondary" onClick={() => setSelected(null)}>Close details</button></div>
+        <div className="detail-grid">
+          <div><span>Amount</span><strong>{selected.currency} {selected.amount.toLocaleString("en-IN")}</strong></div>
+          <div><span>Sender</span><strong>{selected.from_account} · {selected.from_customer_name || "Unknown customer"}</strong></div>
+          <div><span>Receiver</span><strong>{selected.to_account} · {selected.to_customer_name || "Unknown customer"}</strong></div>
+          <div><span>Channel / device</span><strong>{selected.channel} · {selected.device_id}</strong></div>
+          <div><span>Location</span><strong>{selected.location}</strong></div>
+          <div><span>Occurred at</span><strong>{new Date(selected.occurred_at).toLocaleString()}</strong></div>
+        </div>
+      </section>}
 
       <section className="section-head">
         <div><p className="eyebrow">INVESTIGATION QUEUE</p><h2>Risk alerts</h2></div>

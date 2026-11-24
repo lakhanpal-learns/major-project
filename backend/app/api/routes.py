@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.services import engine
@@ -50,9 +50,26 @@ def get_dashboard():
 
 
 @router.get("/transactions", tags=["transactions"])
-def get_transactions(limit: int = 100):
+def get_transactions(
+    limit: int = Query(default=200, ge=1, le=500),
+    q: str | None = Query(default=None, max_length=100),
+    channel: str | None = Query(default=None, pattern="^(UPI|NEFT|IMPS)$"),
+    min_amount: float | None = Query(default=None, ge=0),
+    max_amount: float | None = Query(default=None, ge=0),
+):
     engine.init_db()
-    return engine.list_rows("transactions", max(1, min(limit, 500)))
+    if min_amount is not None and max_amount is not None and min_amount > max_amount:
+        raise HTTPException(status_code=422, detail="min_amount cannot exceed max_amount")
+    return engine.search_transactions(q, channel, min_amount, max_amount, limit)
+
+
+@router.get("/transactions/{transaction_id}", tags=["transactions"])
+def get_transaction(transaction_id: str):
+    engine.init_db()
+    transaction = engine.get_transaction(transaction_id)
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    return transaction
 
 
 @router.get("/alerts", tags=["alerts"])

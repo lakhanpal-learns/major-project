@@ -29,7 +29,7 @@ export default function Home() {
   const [minAmount, setMinAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState("");
   const [selected, setSelected] = useState<Transaction | null>(null);
-  const [message, setMessage] = useState("Connect to the API, then generate demo data.");
+  const [message, setMessage] = useState("Connecting to the transaction processing service…");
   const [busy, setBusy] = useState(false);
 
   async function load() {
@@ -39,7 +39,7 @@ export default function Home() {
       ]);
       if (!d.ok || !a.ok || !c.ok) throw new Error("API request failed");
       setData(await d.json()); setAlerts(await a.json()); setCases(await c.json());
-      setMessage("Live API connection · data loaded");
+      setMessage("Connected · operational data loaded");
     } catch {
       setMessage("API unavailable. Start FastAPI on port 8000 and refresh.");
     }
@@ -95,15 +95,13 @@ export default function Home() {
       <header className="topbar">
         <div className="brand-mark">F</div>
         <div><strong>FININT</strong><span> / INVESTIGATOR WORKSPACE</span></div>
-        <div className="env">ACADEMIC PROTOTYPE</div>
+        <div className="env">OPERATIONS</div>
       </header>
       <section className="hero">
         <p className="eyebrow">FINANCIAL CRIME INTELLIGENCE</p>
         <h1>Banking Fraud <em>&</em><br />AML Intelligence</h1>
-        <p className="intro">Monitor synthetic banking activity, inspect explainable risk signals, and manage investigation cases in one workspace.</p>
+        <p className="intro">Monitor transaction activity, inspect explainable risk signals, and manage investigation cases in one workspace.</p>
         <div className="hero-actions">
-          <button disabled={busy} onClick={() => action("/demo/seed")}>Generate demo banking data</button>
-          <button className="secondary" disabled={busy} onClick={() => action("/analysis/run")}>Run risk analysis</button>
         </div>
         <div className="hero-note"><span className="pulse" /> {message}</div>
       </section>
@@ -144,7 +142,7 @@ export default function Home() {
             <td><button className="small secondary" onClick={() => inspectTransaction(tx.id)}>Inspect</button></td>
           </tr>)}</tbody>
         </table>
-        {transactions.length === 0 && <p className="empty">No matching transactions. Generate demo data or change the filters.</p>}
+        {transactions.length === 0 && <p className="empty">No matching transactions. Adjust the filters or check the configured data source.</p>}
       </div>
       {selected && <section className="detail-panel">
         <div className="detail-heading"><div><p className="eyebrow">TRANSACTION RECORD</p><h3>{selected.id}</h3></div><button className="small secondary" onClick={() => setSelected(null)}>Close details</button></div>
@@ -171,7 +169,7 @@ export default function Home() {
             <td><button className="small" disabled={busy || alert.status !== "open"} onClick={() => action("/alerts/" + alert.id + "/case")}>Open case</button></td>
           </tr>)}</tbody>
         </table>
-        {alerts.length === 0 && <p className="empty">No alerts yet. Generate demo data to begin.</p>}
+        {alerts.length === 0 && <p className="empty">No alerts currently require review.</p>}
       </div>
 
       <section className="section-head case-head">
@@ -186,7 +184,7 @@ export default function Home() {
           <button className="small" disabled={busy} onClick={() => action("/cases/" + item.id, "PATCH", {status:"closed", analyst_note:item.analyst_note})}>Close case</button>
         </div>
       </article>)}</div>
-      <footer><span>FININT / INTERNAL SYSTEM</span><span>{data?.disclaimer || "Risk indicators are not proof of wrongdoing."}</span></footer>
+      <footer><span>FININT / OPERATIONS</span><span>{data?.disclaimer || "Risk indicators are not proof of wrongdoing."}</span></footer>
     </main>
   );
 }

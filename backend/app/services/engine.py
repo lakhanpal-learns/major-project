@@ -83,6 +83,10 @@ def seed_demo_data():
             ("TAML001", "A003", "A004", 48000.0, "INR", "IMPS", "DEV-99", "Mumbai", (_now()-timedelta(minutes=35)).isoformat()),
             ("TAML002", "A003", "A005", 47000.0, "INR", "IMPS", "DEV-99", "Mumbai", (_now()-timedelta(minutes=30)).isoformat()),
             ("TAML003", "A003", "A006", 46500.0, "INR", "IMPS", "DEV-99", "Mumbai", (_now()-timedelta(minutes=25)).isoformat()),
+            # Three distinct accounts funnel funds into A010.
+            ("TAML004", "A004", "A010", 45500.0, "INR", "NEFT", "DEV-41", "Mumbai", (_now()-timedelta(minutes=20)).isoformat()),
+            ("TAML005", "A005", "A010", 44500.0, "INR", "NEFT", "DEV-42", "Mumbai", (_now()-timedelta(minutes=18)).isoformat()),
+            ("TAML006", "A006", "A010", 43500.0, "INR", "NEFT", "DEV-43", "Mumbai", (_now()-timedelta(minutes=15)).isoformat()),
             ("TFRAUD01", "A008", "A001", 195000.0, "INR", "UPI", "DEV-UNKNOWN", "Delhi", (_now()-timedelta(hours=2)).replace(hour=2).isoformat()),
         ]
         rows.extend(suspicious)

@@ -78,12 +78,10 @@ def seed_demo_data():
             rows.append((f"T{i+1:04}", src, dst, amount, "INR", rng.choice(["UPI", "NEFT", "IMPS"]),
                          f"DEV-{rng.randint(1,18):02}", rng.choice(locations), when.isoformat()))
 
-        # Seed visible, explainable patterns for a useful demonstration.
         suspicious = [
             ("TAML001", "A003", "A004", 48000.0, "INR", "IMPS", "DEV-99", "Mumbai", (_now()-timedelta(minutes=35)).isoformat()),
             ("TAML002", "A003", "A005", 47000.0, "INR", "IMPS", "DEV-99", "Mumbai", (_now()-timedelta(minutes=30)).isoformat()),
             ("TAML003", "A003", "A006", 46500.0, "INR", "IMPS", "DEV-99", "Mumbai", (_now()-timedelta(minutes=25)).isoformat()),
-            # Three distinct accounts funnel funds into A010.
             ("TAML004", "A004", "A010", 45500.0, "INR", "NEFT", "DEV-41", "Mumbai", (_now()-timedelta(minutes=20)).isoformat()),
             ("TAML005", "A005", "A010", 44500.0, "INR", "NEFT", "DEV-42", "Mumbai", (_now()-timedelta(minutes=18)).isoformat()),
             ("TAML006", "A006", "A010", 43500.0, "INR", "NEFT", "DEV-43", "Mumbai", (_now()-timedelta(minutes=15)).isoformat()),
@@ -132,7 +130,6 @@ def analyze_all():
                     (str(uuid.uuid4()), tx["id"], "transaction_fraud", score, _risk_level(score),
                      " | ".join(reasons), _now().isoformat()))
 
-        # AML heuristic: accounts receiving funds from 3+ distinct accounts in a short window.
         incoming = {}
         for tx in txs:
             incoming.setdefault(tx["to_account"], []).append(tx)
@@ -171,6 +168,42 @@ def list_rows(table, limit=100):
     with connect() as db:
         return [dict(r) for r in db.execute(
             f"SELECT * FROM {table} ORDER BY {allowed[table]} DESC LIMIT ?", (limit,))]
+
+
+def search_transactions(query=None, channel=None, min_amount=None, max_amount=None, limit=200):
+    clauses, params = [], []
+    if query:
+        pattern = f"%{query.strip()}%"
+        clauses.append("(t.id LIKE ? OR t.from_account LIKE ? OR t.to_account LIKE ? OR t.device_id LIKE ? OR t.location LIKE ?)")
+        params.extend([pattern] * 5)
+    if channel:
+        clauses.append("t.channel = ?")
+        params.append(channel)
+    if min_amount is not None:
+        clauses.append("t.amount >= ?")
+        params.append(min_amount)
+    if max_amount is not None:
+        clauses.append("t.amount <= ?")
+        params.append(max_amount)
+    where = " WHERE " + " AND ".join(clauses) if clauses else ""
+    with connect() as db:
+        rows = db.execute(
+            "SELECT t.*, fa.customer_id AS from_customer_id, ca.name AS from_customer_name, "
+            "ta.customer_id AS to_customer_id, cb.name AS to_customer_name "
+            "FROM transactions t "
+            "LEFT JOIN accounts fa ON fa.id=t.from_account "
+            "LEFT JOIN customers ca ON ca.id=fa.customer_id "
+            "LEFT JOIN accounts ta ON ta.id=t.to_account "
+            "LEFT JOIN customers cb ON cb.id=ta.customer_id"
+            + where + " ORDER BY t.occurred_at DESC LIMIT ?",
+            (*params, limit)
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+
+def get_transaction(transaction_id):
+    rows = search_transactions(query=transaction_id, limit=500)
+    return next((row for row in rows if row["id"] == transaction_id), None)
 
 
 def create_case(alert_id):

@@ -1,13 +1,25 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
 from app.core.config import settings
+from app.services import engine
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Prepare the local environment automatically; no UI action is required.
+    engine.seed_demo_data()
+    yield
+
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.1.0",
-    description="Academic decision-support prototype for fraud-risk and AML investigation.",
+    version="0.2.0",
+    description="Decision-support software for transaction risk and AML investigation.",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
